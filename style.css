@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bharat's Orbit — ISRO Space Day</title>
+<meta name="description" content="An interactive Space Day journey through ISRO's missions, space travel, black holes, zero gravity and relativity.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Ambient starfield / performance-adaptive canvas -->
+<canvas id="starfield" aria-hidden="true"></canvas>
+
+<!-- Scroll progress = mission trajectory -->
+<div class="orbit-track" aria-hidden="true">
+  <svg id="orbitSvg" viewBox="0 0 40 1000" preserveAspectRatio="none">
+    <path id="orbitPath" d="M20,0 C 5,120 35,220 20,340 C 5,460 35,560 20,680 C 5,800 35,880 20,1000" />
+  </svg>
+  <div id="orbitSat" class="orbit-sat">🛰️</div>
+</div>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="#top" class="brand">
+      <span class="brand-mark">भ</span>
+      <span class="brand-text">
+        <strong>BHARAT'S ORBIT</strong>
+        <small>ISRO SPACE DAY // MISSION LOG</small>
+      </span>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="#missions">Missions</a>
+      <a href="#travel">Space Travel</a>
+      <a href="#blackhole">Black Holes</a>
+      <a href="#zerog">Zero-G</a>
+      <a href="#relativity">Relativity</a>
+      <a href="#humor">Humor Break</a>
+      <a href="#quiz">Quiz</a>
+    </nav>
+    <div class="header-controls">
+      <button id="smartBoardToggle" class="ctrl-btn" title="Toggle Smart-Board Mode (bigger text & targets)">
+        <span aria-hidden="true">🖥️</span> Board Mode
+      </button>
+      <button id="navToggle" class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="hero-inner">
+      <p class="eyebrow mono">T-MINUS COUNTDOWN TO CURIOSITY</p>
+      <h1 class="hero-title">
+        India didn't just look at the stars.<br>
+        <span class="accent">It sent a spacecraft to touch them.</span>
+      </h1>
+      <p class="hero-sub">
+        Welcome to Mission Control for Space Day — a hands-on journey through ISRO's greatest launches,
+        the physics of leaving Earth, the monsters we call black holes, the truth about "zero gravity",
+        and why your GPS is quietly using Einstein's homework every second of the day.
+      </p>
+      <div class="hero-ctas">
+        <a href="#missions" class="btn btn-primary">Begin the Mission ↓</a>
+        <a href="#relativity" class="btn btn-ghost">Play with Time Dilation</a>
+      </div>
+
+      <div class="telemetry-strip mono" role="group" aria-label="Space Day quick stats">
+        <div class="telemetry"><span class="t-value" data-count="431">0</span><span class="t-label">Satellites launched for 34+ nations</span></div>
+        <div class="telemetry"><span class="t-value" data-count="3">0</span><span class="t-label">Chandrayaan Moon missions</span></div>
+        <div class="telemetry"><span class="t-value" data-count="1">0</span><span class="t-label">Mars orbiter, first try (MOM)</span></div>
+        <div class="telemetry"><span class="t-value" data-count="1969">0</span><span class="t-label">Year ISRO was founded</span></div>
+      </div>
+    </div>
+    <div class="scroll-cue" aria-hidden="true"><span></span>Scroll to launch</div>
+  </section>
+
+  <!-- MISSIONS -->
+  <section class="section" id="missions">
+    <header class="section-head">
+      <p class="eyebrow mono">GROUND TRACK 01</p>
+      <h2>ISRO's Landmark Missions</h2>
+      <p class="section-lede">Every dot on this track is a real launch that took India further from home. Tap a mission to open its file.</p>
+    </header>
+
+    <div class="mission-tabs" role="tablist" aria-label="ISRO missions">
+      <button class="mtab is-active" role="tab" aria-selected="true" data-target="m-aryabhata">1975 · Aryabhata</button>
+      <button class="mtab" role="tab" aria-selected="false" data-target="m-pslv">1993 · PSLV</button>
+      <button class="mtab" role="tab" aria-selected="false" data-target="m-chandrayaan1">2008 · Chandrayaan-1</button>
+      <button class="mtab" role="tab" aria-selected="false" data-target="m-mangalyaan">2013 · Mangalyaan</button>
+      <button class="mtab" role="tab" aria-selected="false" data-target="m-chandrayaan2">2019 · Chandrayaan-2</button>
+      <button class="mtab" role="tab" aria-selected="false" data-target="m-chandrayaan3">2023 · Chandrayaan-3</button>
+      <button class="mtab" role="tab" aria-selected="false" data-target="m-aditya">2023 · Aditya-L1</button>
+      <button class="mtab" role="tab" aria-selected="false" data-target="m-gaganyaan">Upcoming · Gaganyaan</button>
+    </div>
+
+    <div class="mission-panels">
+
+      <article class="mpanel is-active" id="m-aryabhata" role="tabpanel">
+        <img loading="lazy" src="images/aryabhata-satellite.jpg" alt="Illustration placeholder of India's first satellite Aryabhata">
+        <div class="mpanel-copy">
+          <span class="tag">FIRST STEP</span>
+          <h3>Aryabhata (1975)</h3>
+          <p><strong>In plain words:</strong> India's very first satellite — built at home, launched on a Soviet rocket because India didn't have its own big rockets yet. It studied X-rays from space and the upper atmosphere.</p>
+          <p><strong>Why it matters:</strong> Before this, India was a country that watched space launches on the news. After this, India was a country that <em>appeared</em> in them. Every later mission stands on this one satellite's shoulders.</p>
+          <p class="fact-chip mono">Named after the 5th-century mathematician who calculated Earth's rotation — a thousand years before telescopes existed.</p>
+        </div>
+      </article>
+
+      <article class="mpanel" id="m-pslv" role="tabpanel" hidden>
+        <img loading="lazy" src="images/pslv-rocket-launch.jpg" alt="Illustration placeholder of a PSLV rocket launch">
+        <div class="mpanel-copy">
+          <span class="tag">THE WORKHORSE</span>
+          <h3>PSLV — Polar Satellite Launch Vehicle</h3>
+          <p><strong>In plain words:</strong> Think of PSLV as ISRO's reliable delivery truck. It's a rocket built to carry satellites into polar orbit — an orbit that passes near the North and South poles so a satellite can eventually scan the whole Earth as the planet spins beneath it.</p>
+          <p><strong>Why it matters:</strong> PSLV made India a trusted launch service for the entire world, once famously carrying 104 satellites in a single flight. It's the same rocket family that helped send Chandrayaan-1 and Mangalyaan on their way.</p>
+          <p class="fact-chip mono">A satellite doesn't need an engine to "orbit" — it's simply falling toward Earth so fast sideways that it keeps missing.</p>
+        </div>
+      </article>
+
+      <article class="mpanel" id="m-chandrayaan1" role="tabpanel" hidden>
+        <img loading="lazy" src="images/chandrayaan-1-lander.jpg" alt="Illustration placeholder of Chandrayaan-1">
+        <div class="mpanel-copy">
+          <span class="tag">MOON, FIRST CONTACT</span>
+          <h3>Chandrayaan-1 (2008)</h3>
+          <p><strong>In plain words:</strong> India's first Moon mission. It orbited the Moon and fired an impact probe onto the surface — and its instruments helped confirm water molecules on the Moon, a discovery that reshaped lunar science worldwide.</p>
+          <p><strong>Why it matters:</strong> "Water on the Moon" sounds simple, but it changes everything about future Moon bases, fuel, and even drinking water for astronauts. India helped write that discovery.</p>
+          <p class="fact-chip mono">The probe that hit the Moon's surface carried the Indian flag painted on its side — the tricolour has technically already landed on the Moon three times.</p>
+        </div>
+      </article>
+
+      <article class="mpanel" id="m-mangalyaan" role="tabpanel" hidden>
+        <img loading="lazy" src="images/mangalyaan-mars-orbiter.jpg" alt="Illustration placeholder of the Mars Orbiter Mission Mangalyaan">
+        <div class="mpanel-copy">
+          <span class="tag">FIRST TRY, FIRST PLANET</span>
+          <h3>Mangalyaan / Mars Orbiter Mission (2013)</h3>
+          <p><strong>In plain words:</strong> India sent a spacecraft to Mars and it worked — on the very first attempt, which almost nobody else has managed. It studies the Martian surface, atmosphere and mineral composition from orbit.</p>
+          <p><strong>Why it matters:</strong> It was built on a budget famously smaller than the making of some Hollywood space movies, proving that careful engineering can beat brute-force spending.</p>
+          <p class="fact-chip mono">Mangalyaan's total mission cost has often been compared to roughly the price of a big-budget film — a fun comparison, though ISRO's own reported figures are the accurate source.</p>
+        </div>
+      </article>
+
+      <article class="mpanel" id="m-chandrayaan2" role="tabpanel" hidden>
+        <img loading="lazy" src="images/chandrayaan-2-orbiter.jpg" alt="Illustration placeholder of Chandrayaan-2 orbiter">
+        <div class="mpanel-copy">
+          <span class="tag">A HARD LESSON</span>
+          <h3>Chandrayaan-2 (2019)</h3>
+          <p><strong>In plain words:</strong> This mission's orbiter reached the Moon successfully and is still working today, but the Vikram lander lost contact during its final descent and did not land safely.</p>
+          <p><strong>Why it matters:</strong> Space exploration is one of the few fields where a "partial failure" is still treated as a national milestone — because the orbiter's data and the descent data both directly built the success of what came next.</p>
+          <p class="fact-chip mono">Every hard landing lesson from Chandrayaan-2 was logged, studied and fixed — that's literally how Chandrayaan-3 succeeded.</p>
+        </div>
+      </article>
+
+      <article class="mpanel" id="m-chandrayaan3" role="tabpanel" hidden>
+        <img loading="lazy" src="images/chandrayaan-3-vikram-lander.jpg" alt="Illustration placeholder of Chandrayaan-3 Vikram lander">
+        <div class="mpanel-copy">
+          <span class="tag">TOUCHDOWN</span>
+          <h3>Chandrayaan-3 (2023)</h3>
+          <p><strong>In plain words:</strong> India's Vikram lander touched down safely near the Moon's south polar region, and the Pragyan rover rolled out to study the lunar soil — making India the first country to land near the lunar south pole.</p>
+          <p><strong>Why it matters:</strong> The south pole is thought to hold water ice in permanently shadowed craters — a resource future missions may use for fuel and life support. Landing precisely there is a genuinely different, harder problem than landing near the Moon's equator.</p>
+          <p class="fact-chip mono">The landing spot was officially named "Shiv Shakti Point" after the mission's success.</p>
+        </div>
+      </article>
+
+      <article class="mpanel" id="m-aditya" role="tabpanel" hidden>
+        <img loading="lazy" src="images/aditya-l1-solar-probe.jpg" alt="Illustration placeholder of Aditya-L1 solar observatory">
+        <div class="mpanel-copy">
+          <span class="tag">EYES ON THE SUN</span>
+          <h3>Aditya-L1 (2023)</h3>
+          <p><strong>In plain words:</strong> India's first dedicated solar observatory. It travelled to a special parking spot called the L1 Lagrange point, about 1.5 million km from Earth, where the Sun's and Earth's gravity balance out so a spacecraft can hover with very little fuel.</p>
+          <p><strong>Why it matters:</strong> Aditya-L1 watches the Sun's outer atmosphere (the corona) and solar storms that can knock out satellites and power grids back on Earth — practical, protective science, not just pretty photos.</p>
+          <p class="fact-chip mono">L1 isn't "in orbit around the Sun" in the normal sense — it's a gravitational balance point, a bit like the calmest seat on a seesaw.</p>
+        </div>
+      </article>
+
+      <article class="mpanel" id="m-gaganyaan" role="tabpanel" hidden>
+        <img loading="lazy" src="images/gaganyaan-crew-module.jpg" alt="Illustration placeholder of the Gaganyaan crew module">
+        <div class="mpanel-copy">
+          <span class="tag">NEXT: HUMANS</span>
+          <h3>Gaganyaan (In Progress)</h3>
+          <p><strong>In plain words:</strong> India's first crewed spaceflight programme, designed to send Indian astronauts (referred to as vyomanauts) into low Earth orbit and bring them home safely.</p>
+          <p><strong>Why it matters:</strong> Sending hardware to space is hard. Sending a human and getting them back alive is an entirely different tier of engineering — life support, abort systems, re-entry, recovery — all of it has to work every single time.</p>
+          <p class="fact-chip mono">Uncrewed test flights come first specifically so every abort and recovery system is proven before a human ever sits inside.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- SPACE TRAVEL -->
+  <section class="section alt" id="travel">
+    <header class="section-head">
+      <p class="eyebrow mono">GROUND TRACK 02</p>
+      <h2>How Do You Actually Leave a Planet?</h2>
+      <p class="section-lede">Explained the way you'd explain it to a friend who's never thought about it — no equations required to get the idea, though a few are here for the curious.</p>
+    </header>
+
+    <div class="explainer-grid">
+      <div class="explainer-card">
+        <h3>1. Gravity is the boss you have to out-run</h3>
+        <p>Earth's gravity is constantly pulling everything down. To stay in orbit instead of falling back, a rocket has to reach a sideways speed of roughly <strong>28,000 km/h</strong> — that's not "going up fast", that's "going sideways so fast you keep missing the ground as you fall."</p>
+      </div>
+      <div class="explainer-card">
+        <h3>2. Why rockets come in stages</h3>
+        <p>A rocket carries huge amounts of fuel just to lift its own fuel. Each stage burns out, detaches, and gets thrown away so the rocket isn't dragging dead weight — like unclipping empty water bottles mid-run instead of carrying them the whole race.</p>
+        <img loading="lazy" src="images/rocket-stage-separation.jpg" alt="Illustration placeholder of rocket stage separation">
+      </div>
+      <div class="explainer-card">
+        <h3>3. Orbit vs. escape</h3>
+        <p>An <strong>orbit</strong> means you're going fast enough to fall around a planet forever without hitting it. <strong>Escape velocity</strong> (about 11.2 km/s from Earth) means you're going fast enough to leave the planet's gravity behind entirely — that's the speed needed for Moon and Mars missions.</p>
+        <img loading="lazy" src="images/earth-orbit-diagram.jpg" alt="Illustration placeholder of an orbit diagram">
+      </div>
+      <div class="explainer-card">
+        <h3>4. Getting somewhere is a game of patience</h3>
+        <p>Spacecraft rarely fly in a straight line to their target. They ride curved paths (like the Hohmann transfer) that use the least fuel — which is why Mangalyaan took about 10 months to reach Mars instead of flying there directly.</p>
+      </div>
+    </div>
+
+    <div class="joke-break">
+      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
+      <p class="joke-text" data-joke-slot="travel">Why did the rocket break up with the politician? Every time it tried to launch, the politician kept promising a "final decision next session."</p>
+      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.travel</p>
+    </div>
+  </section>
+
+  <!-- BLACK HOLES -->
+  <section class="section" id="blackhole">
+    <header class="section-head">
+      <p class="eyebrow mono">GROUND TRACK 03</p>
+      <h2>Black Holes: Gravity That Wins Every Argument</h2>
+      <p class="section-lede">Move your cursor near the canvas below to see how a gravity well bends everything nearby.</p>
+    </header>
+
+    <div class="bh-layout">
+      <canvas id="blackHoleCanvas" width="600" height="400" aria-label="Interactive black hole gravity well animation"></canvas>
+      <div class="bh-copy">
+        <h3>What actually is a black hole?</h3>
+        <p>It's a region where so much mass has been packed into so little space that gravity becomes inescapable — not even light, the fastest thing in existence, can get out once it crosses the boundary called the <strong>event horizon</strong>.</p>
+        <h3>Spaghettification (yes, that's the real term)</h3>
+        <p>If you fell in feet-first, gravity would pull your feet far harder than your head, since your feet are closer to the centre. You'd be stretched into a long thin strand — scientists genuinely call this <em>spaghettification</em>.</p>
+        <h3>They're not cosmic vacuum cleaners</h3>
+        <p>A black hole only pulls in what gets close enough. If our Sun were magically replaced by a black hole of the same mass, Earth would keep orbiting exactly as before — just very, very dark.</p>
+        <img loading="lazy" src="images/black-hole-accretion-disk.jpg" alt="Illustration placeholder of a black hole accretion disk">
+      </div>
+    </div>
+
+    <div class="joke-break">
+      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
+      <p class="joke-text" data-joke-slot="blackhole">A black hole and a politician have the same skill: both can make a huge budget disappear without emitting a single straight answer.</p>
+      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.blackhole</p>
+    </div>
+  </section>
+
+  <!-- ZERO GRAVITY -->
+  <section class="section alt" id="zerog">
+    <header class="section-head">
+      <p class="eyebrow mono">GROUND TRACK 04</p>
+      <h2>"Zero Gravity" Is Actually a Bit of a Myth</h2>
+      <p class="section-lede">Astronauts on the ISS aren't floating because gravity switched off. Gravity up there is still about 90% as strong as it is on your street.</p>
+    </header>
+
+    <div class="zerog-layout">
+      <div class="floaters" aria-hidden="true">
+        <span>🛰️</span><span>🧑‍🚀</span><span>🔧</span><span>📎</span><span>💧</span><span>🍎</span>
+      </div>
+      <div class="explainer-card wide">
+        <h3>So why do things float?</h3>
+        <p>The ISS and everything inside it — including the astronauts — are all in continuous free fall around Earth. They're falling <em>together</em> at the same rate, so relative to each other, nothing appears to fall at all. It's the same feeling as the drop of a fast elevator, just stretched out forever.</p>
+        <p>The proper term scientists use is <strong>microgravity</strong>, not "zero gravity" — because gravity is very much still there, doing exactly what it always does.</p>
+        <img loading="lazy" src="images/astronaut-zero-gravity.jpg" alt="Illustration placeholder of an astronaut in microgravity">
+      </div>
+      <div class="explainer-card wide">
+        <h3>What microgravity does to the human body</h3>
+        <p>Without weight pressing on bones and muscles, astronauts can lose bone density and muscle mass — which is why they exercise roughly two hours a day on the ISS. Fluids also shift upward toward the head, which is why astronauts often look slightly puffy-faced in photos.</p>
+        <img loading="lazy" src="images/iss-floating-objects.jpg" alt="Illustration placeholder of objects floating inside a space station">
+      </div>
+    </div>
+
+    <div class="joke-break">
+      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
+      <p class="joke-text" data-joke-slot="zerog">Astronauts in microgravity float because nothing is holding them down — which, coincidentally, is also how most politicians describe their campaign promises after election day.</p>
+      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.zerog</p>
+    </div>
+  </section>
+
+  <!-- RELATIVITY -->
+  <section class="section" id="relativity">
+    <header class="section-head">
+      <p class="eyebrow mono">GROUND TRACK 05</p>
+      <h2>Space-Time & Relativity, Without the Headache</h2>
+      <p class="section-lede">Two facts do all the heavy lifting: gravity bends time, and speed bends time. Try it yourself below.</p>
+    </header>
+
+    <div class="relativity-grid">
+      <div class="explainer-card">
+        <h3>Time isn't the same for everyone</h3>
+        <p>Einstein showed that time runs slightly slower for anything moving very fast, or sitting in a stronger gravitational field. This isn't a trick of measurement — it's genuinely how the universe works, and it's been measured directly with atomic clocks.</p>
+      </div>
+      <div class="explainer-card">
+        <h3>Your phone uses this, right now</h3>
+        <p>GPS satellites orbit fast (speeding up their clocks' apparent slowness a little) but sit in weaker gravity far from Earth (slowing them down a lot more). Uncorrected, GPS would drift by several kilometres a day. Engineers correct for relativity in the software — quietly, constantly, successfully.</p>
+        <img loading="lazy" src="images/gps-satellite-relativity.jpg" alt="Illustration placeholder of a GPS satellite">
+      </div>
+    </div>
+
+    <div class="dilation-tool">
+      <h3>Try it: the Time Dilation Calculator</h3>
+      <p>Drag the slider to set a spacecraft's speed as a fraction of the speed of light, and see how differently time would pass for the traveller versus someone waiting on Earth.</p>
+      <label for="speedSlider" class="mono">Speed: <span id="speedReadout">10%</span> of light speed</label>
+      <input type="range" id="speedSlider" min="1" max="99" value="10" aria-describedby="dilationResult">
+      <div id="dilationResult" class="dilation-result mono">
+        <div><span class="dr-label">1 year on the ship</span><span id="shipTime" class="dr-value">= 1.00 years on Earth</span></div>
+        <div><span class="dr-label">Lorentz factor (γ)</span><span id="gammaVal" class="dr-value">1.0050</span></div>
+      </div>
+      <img loading="lazy" src="images/time-dilation-clocks.jpg" alt="Illustration placeholder comparing two clocks">
+    </div>
+
+    <div class="joke-break">
+      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
+      <p class="joke-text" data-joke-slot="relativity">Time slows down the faster you go — which is also the only known way to make a politician's speech feel like it's lasting several geological eras.</p>
+      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.relativity</p>
+    </div>
+  </section>
+
+  <!-- HUMOR DEDICATED SECTION -->
+  <section class="section alt" id="humor">
+    <header class="section-head">
+      <p class="eyebrow mono">GROUND TRACK 06</p>
+      <h2>Full Mission Control Humor Reel</h2>
+      <p class="section-lede">All placeholder jokes live in one place in <code>script.js</code> (look for the <code>JOKES</code> object) so you can replace them in one go without hunting through the HTML.</p>
+    </header>
+    <div class="joke-carousel">
+      <button id="jokePrev" class="ctrl-btn" aria-label="Previous joke">←</button>
+      <div class="joke-card">
+        <p id="jokeCarouselText">Loading a fresh one...</p>
+        <span id="jokeCarouselIndex" class="mono">1 / 5</span>
+      </div>
+      <button id="jokeNext" class="ctrl-btn" aria-label="Next joke">→</button>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="section" id="quiz">
+    <header class="section-head">
+      <p class="eyebrow mono">FINAL CHECKPOINT</p>
+      <h2>Test Your Space IQ</h2>
+      <p class="section-lede">Five quick questions. See if you were paying attention on the way up.</p>
+    </header>
+    <div id="quizRoot" class="quiz-root"></div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <strong>BHARAT'S ORBIT</strong>
+      <p class="mono small">Built for ISRO Space Day. Every image in this build is a labelled placeholder — replace the /images files with real photos whenever you're ready.</p>
+    </div>
+    <div class="perf-indicator mono" id="perfIndicator" title="Adaptive Performance Mode">
+      PERF: <span id="perfState">CALIBRATING…</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
