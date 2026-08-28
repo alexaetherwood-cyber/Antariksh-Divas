@@ -5,11 +5,17 @@
    ===================================================================== */
 
 const JOKES = {
+  missions: [
+    "Fun fact: building a satellite takes years of precision engineering. Passing a space-funding bill takes only slightly longer.",
+  ],
   travel: [
     "Why did the rocket break up with the politician? Every time it tried to launch, the politician kept promising a \"final decision next session.\"",
   ],
   blackhole: [
     "A black hole and a politician have the same skill: both can make a huge budget disappear without emitting a single straight answer.",
+  ],
+  zerogMid: [
+    "Fun fact: unlike astronauts, politicians achieve weightlessness the moment a hard question enters the room.",
   ],
   zerog: [
     "Astronauts float in microgravity because nothing is holding them down — which, coincidentally, is also how most politicians describe their campaign promises after election day.",
@@ -17,14 +23,13 @@ const JOKES = {
   relativity: [
     "Time slows down the faster you go — which is also the only known way to make a politician's speech feel like it's lasting several geological eras.",
   ],
-  carousel: [
-    "Space has zero air resistance and zero politicians. Coincidence? NASA won't confirm, ISRO won't deny.",
-    "A satellite orbits the Earth every 90 minutes. A politician orbits the truth on a much longer, much less predictable schedule.",
-    "Escape velocity is the speed needed to break free of a planet's gravity. Political accountability apparently requires a higher velocity than that.",
-    "Black holes have an event horizon — the point past which nothing escapes. Election season has one too; it's called 'the day after voting.'",
-    "In space, no one can hear you scream. In Parliament, everyone can hear you scream, they just all do it at the same time so nothing is understood.",
+  quiz: [
+    "Unlike a politician's promises, every answer in this quiz is checkable, correctable, and doesn't change after election season.",
   ],
 };
+
+/* Edit LAUNCH_TARGET to any future date/time to drive the hero countdown widget. */
+const LAUNCH_TARGET = new Date(Date.now() + 1000 * 60 * 60 * 24 * 47); // placeholder: ~47 days out
 
 /* --------------------------- Utility --------------------------- */
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
@@ -238,20 +243,204 @@ function initJokeSlots() {
   });
 }
 
-/* --------------------------- Joke carousel --------------------------- */
-function initJokeCarousel() {
-  const list = JOKES.carousel;
-  let idx = 0;
-  const textEl = $('#jokeCarouselText');
-  const indexEl = $('#jokeCarouselIndex');
+/* --------------------------- Fake loading screen --------------------------- */
+function initLoadingScreen() {
+  const screen = $('#loadingScreen');
+  const lineEl = $('#loadingLine');
+  const barFill = $('#loadingBarFill');
+  const countdownEl = $('#loadingCountdown');
+  if (!screen) return;
 
-  function render() {
-    textEl.textContent = list[idx];
-    indexEl.textContent = `${idx + 1} / ${list.length}`;
+  const lines = [
+    'INITIALIZING GROUND STATION…',
+    'CALIBRATING TELEMETRY…',
+    'LOCKING ORBITAL PATH…',
+    'PRESSURIZING FUEL LINES…',
+    'ALL SYSTEMS NOMINAL…',
+  ];
+  let step = 0;
+  const totalSteps = 5;
+  const stepDuration = 420; // ms per step
+
+  const interval = setInterval(() => {
+    step++;
+    const pct = Math.min((step / totalSteps) * 100, 100);
+    barFill.style.width = pct + '%';
+    if (lineEl) lineEl.textContent = lines[Math.min(step, lines.length - 1)];
+    const remaining = Math.max(totalSteps - step, 0);
+    if (countdownEl) countdownEl.textContent = remaining > 0 ? `T-MINUS 0${remaining}` : 'LIFTOFF 🚀';
+
+    if (step >= totalSteps) {
+      clearInterval(interval);
+      setTimeout(() => {
+        screen.classList.add('is-hidden');
+        document.body.classList.remove('is-loading');
+        setTimeout(() => screen.remove(), 700);
+      }, 350);
+    }
+  }, stepDuration);
+
+  // Safety net: never trap the user behind the loading screen for more than 4s.
+  setTimeout(() => {
+    if (!screen.classList.contains('is-hidden')) {
+      clearInterval(interval);
+      screen.classList.add('is-hidden');
+      document.body.classList.remove('is-loading');
+      setTimeout(() => screen.remove(), 700);
+    }
+  }, 4000);
+}
+
+/* --------------------------- Launch countdown widget --------------------------- */
+function initLaunchCountdown() {
+  const els = {
+    d: $('#cdDays'), h: $('#cdHours'), m: $('#cdMins'), s: $('#cdSecs'),
+  };
+  if (!els.d) return;
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function tick() {
+    const diff = Math.max(LAUNCH_TARGET.getTime() - Date.now(), 0);
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const mins = Math.floor((diff / (1000 * 60)) % 60);
+    const secs = Math.floor((diff / 1000) % 60);
+    els.d.textContent = pad(days);
+    els.h.textContent = pad(hours);
+    els.m.textContent = pad(mins);
+    els.s.textContent = pad(secs);
   }
-  $('#jokePrev').addEventListener('click', () => { idx = (idx - 1 + list.length) % list.length; render(); });
-  $('#jokeNext').addEventListener('click', () => { idx = (idx + 1) % list.length; render(); });
-  render();
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* --------------------------- Mission passport (gamified scroll progress) --------------------------- */
+function initPassport() {
+  const stamps = $$('.stamp');
+  if (!stamps.length) return;
+  const map = new Map(stamps.map(s => [s.dataset.stamp, s]));
+  const ids = Array.from(map.keys());
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const stamp = map.get(entry.target.id);
+        if (stamp) stamp.classList.add('is-visited');
+      }
+    });
+  }, { threshold: 0.35 });
+  ids.forEach(id => {
+    const section = document.getElementById(id);
+    if (section) io.observe(section);
+  });
+}
+
+/* --------------------------- Text-to-speech "Listen" buttons --------------------------- */
+function initListenButtons() {
+  if (!('speechSynthesis' in window)) {
+    $$('.listen-btn').forEach(btn => btn.style.display = 'none');
+    return;
+  }
+  let currentUtterance = null;
+  let currentBtn = null;
+
+  function stopSpeaking() {
+    window.speechSynthesis.cancel();
+    if (currentBtn) currentBtn.classList.remove('is-speaking');
+    currentUtterance = null;
+    currentBtn = null;
+  }
+
+  $$('.listen-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sectionId = btn.dataset.listen;
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+
+      if (currentBtn === btn) { stopSpeaking(); return; }
+      stopSpeaking();
+
+      const text = Array.from(section.querySelectorAll('h2, h3, p'))
+        .map(el => el.textContent.trim())
+        .filter(Boolean)
+        .join('. ');
+
+      currentUtterance = new SpeechSynthesisUtterance(text);
+      currentUtterance.rate = 0.98;
+      currentUtterance.onend = stopSpeaking;
+      currentUtterance.onerror = stopSpeaking;
+      currentBtn = btn;
+      btn.classList.add('is-speaking');
+      window.speechSynthesis.speak(currentUtterance);
+    });
+  });
+}
+
+/* --------------------------- Keyboard section navigation --------------------------- */
+function initKeyboardNav() {
+  const ids = ['top', 'missions', 'travel', 'blackhole', 'zerog', 'relativity', 'quiz'];
+  window.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (['input', 'textarea', 'button', 'select'].includes(tag)) return;
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+
+    const positions = ids.map(id => {
+      const el = document.getElementById(id);
+      return el ? Math.abs(el.getBoundingClientRect().top) : Infinity;
+    });
+    const currentIdx = positions.indexOf(Math.min(...positions));
+    let nextIdx = e.key === 'ArrowDown' ? currentIdx + 1 : currentIdx - 1;
+    nextIdx = Math.max(0, Math.min(ids.length - 1, nextIdx));
+    const target = document.getElementById(ids[nextIdx]);
+    if (target) target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+  });
+}
+
+/* --------------------------- Confetti (quiz celebration) --------------------------- */
+function fireConfetti() {
+  const canvas = $('#confettiCanvas');
+  if (!canvas || prefersReducedMotion) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.classList.add('is-active');
+
+  const colors = ['#ff9933', '#ffd166', '#10b981', '#f5f7fa'];
+  const count = PerfGuard.getMode() === 'low' ? 0 : PerfGuard.getMode() === 'medium' ? 60 : 140;
+  const pieces = Array.from({ length: count }, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * 200,
+    r: Math.random() * 5 + 3,
+    vy: Math.random() * 2 + 2,
+    vx: (Math.random() - 0.5) * 2,
+    rot: Math.random() * 360,
+    vr: (Math.random() - 0.5) * 8,
+    color: colors[Math.floor(Math.random() * colors.length)],
+  }));
+
+  let frame = 0;
+  const maxFrames = 260;
+  function draw() {
+    frame++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rot * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+      ctx.restore();
+    });
+    if (frame < maxFrames && count > 0) {
+      requestAnimationFrame(draw);
+    } else {
+      canvas.classList.remove('is-active');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+  requestAnimationFrame(draw);
 }
 
 /* --------------------------- Black hole interactive canvas --------------------------- */
@@ -452,8 +641,24 @@ function initQuiz() {
     const scoreEl = document.createElement('div');
     scoreEl.className = 'quiz-score';
     scoreEl.innerHTML = `<div class="score-num">${score} / ${QUIZ_DATA.length}</div><p>Space IQ checkpoint complete.</p>`;
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'ctrl-btn';
+    copyBtn.type = 'button';
+    copyBtn.textContent = '📋 Copy my score';
+    copyBtn.addEventListener('click', () => {
+      const msg = `I scored ${score}/${QUIZ_DATA.length} on the Bharat's Orbit Space Day quiz! 🚀`;
+      navigator.clipboard?.writeText(msg).then(() => {
+        copyBtn.textContent = '✅ Copied!';
+        setTimeout(() => copyBtn.textContent = '📋 Copy my score', 1800);
+      }).catch(() => {});
+    });
+    scoreEl.appendChild(copyBtn);
+
     root.appendChild(scoreEl);
     scoreEl.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' });
+
+    if (score === QUIZ_DATA.length) fireConfetti();
   }
 }
 
@@ -467,6 +672,7 @@ function initHeaderShadow() {
 
 /* --------------------------- Init all --------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
+  initLoadingScreen();
   PerfGuard.init();
   initNav();
   initBoardMode();
@@ -474,9 +680,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initOrbitSpine();
   initReveal();
   initCountUp();
+  initLaunchCountdown();
   initMissionTabs();
   initJokeSlots();
-  initJokeCarousel();
+  initPassport();
+  initListenButtons();
+  initKeyboardNav();
   initBlackHoleCanvas();
   initRelativityTool();
   initQuiz();

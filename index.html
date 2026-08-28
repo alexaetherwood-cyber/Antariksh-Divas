@@ -9,7 +9,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="is-loading">
+
+<!-- FAKE LOADING SCREEN -->
+<div id="loadingScreen" class="loading-screen" role="status" aria-live="polite">
+  <div class="loading-inner">
+    <div class="loading-emblem">🚀</div>
+    <p class="loading-title mono">BHARAT'S ORBIT</p>
+    <p class="loading-line mono" id="loadingLine">INITIALIZING GROUND STATION…</p>
+    <div class="loading-bar"><div class="loading-bar-fill" id="loadingBarFill"></div></div>
+    <p class="loading-countdown mono" id="loadingCountdown">T-MINUS 05</p>
+  </div>
+</div>
 
 <!-- Ambient starfield / performance-adaptive canvas -->
 <canvas id="starfield" aria-hidden="true"></canvas>
@@ -39,10 +50,18 @@
       <a href="#blackhole">Black Holes</a>
       <a href="#zerog">Zero-G</a>
       <a href="#relativity">Relativity</a>
-      <a href="#humor">Humor Break</a>
       <a href="#quiz">Quiz</a>
     </nav>
     <div class="header-controls">
+      <div class="passport mono" id="passport" title="Mission Passport — lights up as you explore each section">
+        <span class="passport-label">PASSPORT</span>
+        <span class="stamp" data-stamp="missions" title="Missions">①</span>
+        <span class="stamp" data-stamp="travel" title="Space Travel">②</span>
+        <span class="stamp" data-stamp="blackhole" title="Black Holes">③</span>
+        <span class="stamp" data-stamp="zerog" title="Zero-G">④</span>
+        <span class="stamp" data-stamp="relativity" title="Relativity">⑤</span>
+        <span class="stamp" data-stamp="quiz" title="Quiz">⑥</span>
+      </div>
       <button id="smartBoardToggle" class="ctrl-btn" title="Toggle Smart-Board Mode (bigger text & targets)">
         <span aria-hidden="true">🖥️</span> Board Mode
       </button>
@@ -73,6 +92,16 @@
         <a href="#relativity" class="btn btn-ghost">Play with Time Dilation</a>
       </div>
 
+      <div class="countdown-widget mono" aria-label="Countdown to next placeholder launch window">
+        <span class="countdown-label">NEXT LAUNCH WINDOW (edit in script.js → LAUNCH_TARGET)</span>
+        <div class="countdown-nums" id="countdownNums">
+          <div><span id="cdDays">00</span><small>days</small></div>
+          <div><span id="cdHours">00</span><small>hrs</small></div>
+          <div><span id="cdMins">00</span><small>min</small></div>
+          <div><span id="cdSecs">00</span><small>sec</small></div>
+        </div>
+      </div>
+
       <div class="telemetry-strip mono" role="group" aria-label="Space Day quick stats">
         <div class="telemetry"><span class="t-value" data-count="431">0</span><span class="t-label">Satellites launched for 34+ nations</span></div>
         <div class="telemetry"><span class="t-value" data-count="3">0</span><span class="t-label">Chandrayaan Moon missions</span></div>
@@ -89,6 +118,7 @@
       <p class="eyebrow mono">GROUND TRACK 01</p>
       <h2>ISRO's Landmark Missions</h2>
       <p class="section-lede">Every dot on this track is a real launch that took India further from home. Tap a mission to open its file.</p>
+      <button class="listen-btn ctrl-btn" data-listen="missions">🔊 Listen to this section</button>
     </header>
 
     <div class="mission-tabs" role="tablist" aria-label="ISRO missions">
@@ -101,6 +131,8 @@
       <button class="mtab" role="tab" aria-selected="false" data-target="m-aditya">2023 · Aditya-L1</button>
       <button class="mtab" role="tab" aria-selected="false" data-target="m-gaganyaan">Upcoming · Gaganyaan</button>
     </div>
+
+    <p class="quip" data-joke-slot="missions">Fun fact: building a satellite takes years of precision engineering. Passing a space-funding bill takes only slightly longer.</p>
 
     <div class="mission-panels">
 
@@ -201,6 +233,7 @@
       <p class="eyebrow mono">GROUND TRACK 02</p>
       <h2>How Do You Actually Leave a Planet?</h2>
       <p class="section-lede">Explained the way you'd explain it to a friend who's never thought about it — no equations required to get the idea, though a few are here for the curious.</p>
+      <button class="listen-btn ctrl-btn" data-listen="travel">🔊 Listen to this section</button>
     </header>
 
     <div class="explainer-grid">
@@ -224,11 +257,7 @@
       </div>
     </div>
 
-    <div class="joke-break">
-      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
-      <p class="joke-text" data-joke-slot="travel">Why did the rocket break up with the politician? Every time it tried to launch, the politician kept promising a "final decision next session."</p>
-      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.travel</p>
-    </div>
+    <p class="quip" data-joke-slot="travel">Why did the rocket break up with the politician? Every time it tried to launch, the politician kept promising a "final decision next session."</p>
   </section>
 
   <!-- BLACK HOLES -->
@@ -237,6 +266,7 @@
       <p class="eyebrow mono">GROUND TRACK 03</p>
       <h2>Black Holes: Gravity That Wins Every Argument</h2>
       <p class="section-lede">Move your cursor near the canvas below to see how a gravity well bends everything nearby.</p>
+      <button class="listen-btn ctrl-btn" data-listen="blackhole">🔊 Listen to this section</button>
     </header>
 
     <div class="bh-layout">
@@ -252,11 +282,7 @@
       </div>
     </div>
 
-    <div class="joke-break">
-      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
-      <p class="joke-text" data-joke-slot="blackhole">A black hole and a politician have the same skill: both can make a huge budget disappear without emitting a single straight answer.</p>
-      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.blackhole</p>
-    </div>
+    <p class="quip" data-joke-slot="blackhole">A black hole and a politician have the same skill: both can make a huge budget disappear without emitting a single straight answer.</p>
   </section>
 
   <!-- ZERO GRAVITY -->
@@ -265,6 +291,7 @@
       <p class="eyebrow mono">GROUND TRACK 04</p>
       <h2>"Zero Gravity" Is Actually a Bit of a Myth</h2>
       <p class="section-lede">Astronauts on the ISS aren't floating because gravity switched off. Gravity up there is still about 90% as strong as it is on your street.</p>
+      <button class="listen-btn ctrl-btn" data-listen="zerog">🔊 Listen to this section</button>
     </header>
 
     <div class="zerog-layout">
@@ -277,6 +304,7 @@
         <p>The proper term scientists use is <strong>microgravity</strong>, not "zero gravity" — because gravity is very much still there, doing exactly what it always does.</p>
         <img loading="lazy" src="images/astronaut-zero-gravity.jpg" alt="Illustration placeholder of an astronaut in microgravity">
       </div>
+      <p class="quip" data-joke-slot="zerogMid">Fun fact: unlike astronauts, politicians achieve weightlessness the moment a hard question enters the room.</p>
       <div class="explainer-card wide">
         <h3>What microgravity does to the human body</h3>
         <p>Without weight pressing on bones and muscles, astronauts can lose bone density and muscle mass — which is why they exercise roughly two hours a day on the ISS. Fluids also shift upward toward the head, which is why astronauts often look slightly puffy-faced in photos.</p>
@@ -284,11 +312,7 @@
       </div>
     </div>
 
-    <div class="joke-break">
-      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
-      <p class="joke-text" data-joke-slot="zerog">Astronauts in microgravity float because nothing is holding them down — which, coincidentally, is also how most politicians describe their campaign promises after election day.</p>
-      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.zerog</p>
-    </div>
+    <p class="quip" data-joke-slot="zerog">Astronauts in microgravity float because nothing is holding them down — which, coincidentally, is also how most politicians describe their campaign promises after election day.</p>
   </section>
 
   <!-- RELATIVITY -->
@@ -297,6 +321,7 @@
       <p class="eyebrow mono">GROUND TRACK 05</p>
       <h2>Space-Time & Relativity, Without the Headache</h2>
       <p class="section-lede">Two facts do all the heavy lifting: gravity bends time, and speed bends time. Try it yourself below.</p>
+      <button class="listen-btn ctrl-btn" data-listen="relativity">🔊 Listen to this section</button>
     </header>
 
     <div class="relativity-grid">
@@ -323,28 +348,7 @@
       <img loading="lazy" src="images/time-dilation-clocks.jpg" alt="Illustration placeholder comparing two clocks">
     </div>
 
-    <div class="joke-break">
-      <p class="joke-label mono">🛰️ MISSION CONTROL HUMOR BREAK</p>
-      <p class="joke-text" data-joke-slot="relativity">Time slows down the faster you go — which is also the only known way to make a politician's speech feel like it's lasting several geological eras.</p>
-      <p class="joke-hint mono">— swap this line for your own joke in script.js, marked JOKES.relativity</p>
-    </div>
-  </section>
-
-  <!-- HUMOR DEDICATED SECTION -->
-  <section class="section alt" id="humor">
-    <header class="section-head">
-      <p class="eyebrow mono">GROUND TRACK 06</p>
-      <h2>Full Mission Control Humor Reel</h2>
-      <p class="section-lede">All placeholder jokes live in one place in <code>script.js</code> (look for the <code>JOKES</code> object) so you can replace them in one go without hunting through the HTML.</p>
-    </header>
-    <div class="joke-carousel">
-      <button id="jokePrev" class="ctrl-btn" aria-label="Previous joke">←</button>
-      <div class="joke-card">
-        <p id="jokeCarouselText">Loading a fresh one...</p>
-        <span id="jokeCarouselIndex" class="mono">1 / 5</span>
-      </div>
-      <button id="jokeNext" class="ctrl-btn" aria-label="Next joke">→</button>
-    </div>
+    <p class="quip" data-joke-slot="relativity">Time slows down the faster you go — which is also the only known way to make a politician's speech feel like it's lasting several geological eras.</p>
   </section>
 
   <!-- QUIZ -->
@@ -354,7 +358,9 @@
       <h2>Test Your Space IQ</h2>
       <p class="section-lede">Five quick questions. See if you were paying attention on the way up.</p>
     </header>
+    <p class="quip" data-joke-slot="quiz">Unlike a politician's promises, every answer in this quiz is checkable, correctable, and doesn't change after election season.</p>
     <div id="quizRoot" class="quiz-root"></div>
+    <canvas id="confettiCanvas" aria-hidden="true"></canvas>
   </section>
 
 </main>
@@ -364,6 +370,7 @@
     <div>
       <strong>BHARAT'S ORBIT</strong>
       <p class="mono small">Built for ISRO Space Day. Every image in this build is a labelled placeholder — replace the /images files with real photos whenever you're ready.</p>
+      <p class="mono small">Tip: use <code>↑</code> / <code>↓</code> arrow keys anywhere on the page to jump between sections.</p>
     </div>
     <div class="perf-indicator mono" id="perfIndicator" title="Adaptive Performance Mode">
       PERF: <span id="perfState">CALIBRATING…</span>
