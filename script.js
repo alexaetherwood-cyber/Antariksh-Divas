@@ -731,9 +731,12 @@ function initCertificate() {
 /* --------------------------- Black hole interactive canvas --------------------------- */
 function initBlackHoleCanvas() {
   const canvas = $('#blackHoleCanvas');
+  const modeBtn = $('#bhModeBtn');
   const ctx = canvas.getContext('2d');
   let particles = [];
   let pointer = { x: canvas.width / 2, y: canvas.height / 2, active: false };
+  let mode = 'particles'; // 'particles' | 'gargantua'
+  let lensPhase = 0;
 
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
@@ -757,32 +760,9 @@ function initBlackHoleCanvas() {
     };
   }
 
-  function draw() {
-    ctx.fillStyle = 'rgba(10,14,26,0.25)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    const eventHorizon = Math.min(canvas.width, canvas.height) * 0.09;
-
-    // event horizon glow
-    const grad = ctx.createRadialGradient(cx, cy, eventHorizon * 0.2, cx, cy, eventHorizon * 3);
-    grad.addColorStop(0, 'rgba(0,0,0,1)');
-    grad.addColorStop(0.4, 'rgba(255,153,51,0.25)');
-    grad.addColorStop(1, 'rgba(10,14,26,0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, eventHorizon * 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(cx, cy, eventHorizon, 0, Math.PI * 2);
-    ctx.fill();
-
+  function drawParticleMode(cx, cy, eventHorizon) {
     for (const p of particles) {
       p.angle += p.speed * (1 + eventHorizon / p.radius);
-      // slowly drift inward, respawn when swallowed
       p.radius -= 0.15;
       if (p.radius < eventHorizon) {
         Object.assign(p, spawnParticle(), { radius: canvas.width / 2 });
@@ -796,6 +776,103 @@ function initBlackHoleCanvas() {
       ctx.arc(x, y, p.size, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  // A stylised, physically-motivated render of gravitational lensing around a
+  // black hole's accretion disk — the same real effect (light from the far
+  // side of the disk bending over the poles) that Kip Thorne's equations
+  // produced for "Gargantua" in Interstellar, and that real telescopes have
+  // since photographed around actual black holes (M87*, Sagittarius A*).
+  function drawGargantuaMode(cx, cy, eventHorizon) {
+    lensPhase += 0.01;
+    const diskOuter = eventHorizon * 5.2;
+    const squash = 0.32; // how flat the disk ellipse looks (near edge-on view)
+
+    // faint outer glow
+    const glow = ctx.createRadialGradient(cx, cy, eventHorizon, cx, cy, diskOuter * 1.15);
+    glow.addColorStop(0, 'rgba(255,209,102,0.18)');
+    glow.addColorStop(1, 'rgba(10,14,26,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, diskOuter * 1.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // main flat accretion disk, seen nearly edge-on
+    const steps = 60;
+    for (let i = steps; i > 0; i--) {
+      const t = i / steps;
+      const r = eventHorizon * 1.15 + t * (diskOuter - eventHorizon * 1.15);
+      const brightness = 1 - t * 0.85;
+      const hue = t < 0.4 ? '255,255,255' : t < 0.7 ? '255,209,102' : '255,140,60';
+      ctx.strokeStyle = `rgba(${hue},${brightness})`;
+      ctx.lineWidth = (diskOuter - eventHorizon) / steps + 0.6;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r, r * squash, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // event horizon (the black sphere occludes the middle of the disk)
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(cx, cy, eventHorizon, 0, Math.PI * 2);
+    ctx.fill();
+
+    // photon ring — a thin, very bright rim right at the edge of the shadow
+    ctx.strokeStyle = 'rgba(255,247,220,0.9)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, eventHorizon * 1.03, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // lensed arcs: light from the far side of the disk, bent up and over the
+    // poles by gravity, appearing as a halo above and below the black hole.
+    const arcWobble = Math.sin(lensPhase) * 2;
+    [-1, 1].forEach(dir => {
+      const arcRy = eventHorizon * (1.55 + arcWobble * 0.01);
+      const arcRx = eventHorizon * 1.9;
+      ctx.save();
+      ctx.translate(cx, cy + dir * eventHorizon * 0.05);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, arcRx, arcRy, 0, dir > 0 ? 0.08 : Math.PI + 0.08, dir > 0 ? Math.PI - 0.08 : 2 * Math.PI - 0.08);
+      const arcGrad = ctx.createLinearGradient(-arcRx, 0, arcRx, 0);
+      arcGrad.addColorStop(0, 'rgba(255,209,102,0)');
+      arcGrad.addColorStop(0.5, 'rgba(255,241,214,0.85)');
+      arcGrad.addColorStop(1, 'rgba(255,209,102,0)');
+      ctx.strokeStyle = arcGrad;
+      ctx.lineWidth = eventHorizon * 0.22;
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  function draw() {
+    ctx.fillStyle = mode === 'gargantua' ? 'rgba(10,14,26,0.4)' : 'rgba(10,14,26,0.25)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const eventHorizon = Math.min(canvas.width, canvas.height) * 0.09;
+
+    if (mode === 'gargantua') {
+      drawGargantuaMode(cx, cy, eventHorizon);
+    } else {
+      // event horizon glow (simple mode)
+      const grad = ctx.createRadialGradient(cx, cy, eventHorizon * 0.2, cx, cy, eventHorizon * 3);
+      grad.addColorStop(0, 'rgba(0,0,0,1)');
+      grad.addColorStop(0.4, 'rgba(255,153,51,0.25)');
+      grad.addColorStop(1, 'rgba(10,14,26,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, eventHorizon * 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(cx, cy, eventHorizon, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawParticleMode(cx, cy, eventHorizon);
+    }
     requestAnimationFrame(draw);
   }
 
@@ -806,6 +883,14 @@ function initBlackHoleCanvas() {
     pointer.active = true;
   });
   canvas.addEventListener('pointerleave', () => { pointer.active = false; });
+
+  if (modeBtn) {
+    modeBtn.addEventListener('click', () => {
+      mode = mode === 'particles' ? 'gargantua' : 'particles';
+      modeBtn.textContent = mode === 'gargantua' ? '🔬 Switch to Simple Mode' : '🎬 Switch to Gargantua Mode';
+      modeBtn.classList.toggle('is-active', mode === 'gargantua');
+    });
+  }
 
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();

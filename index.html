@@ -330,7 +330,10 @@
     </header>
 
     <div class="bh-layout">
-      <canvas id="blackHoleCanvas" width="600" height="400" aria-label="Interactive black hole gravity well animation"></canvas>
+      <div class="bh-canvas-wrap">
+        <canvas id="blackHoleCanvas" width="600" height="400" aria-label="Interactive black hole gravity well animation"></canvas>
+        <button class="ctrl-btn bh-mode-btn" id="bhModeBtn" type="button">🎬 Switch to Gargantua Mode</button>
+      </div>
       <div class="bh-copy">
         <h3>What actually is a black hole?</h3>
         <p>It's a region where so much mass has been packed into so little space that gravity becomes inescapable — not even light, the fastest thing in existence, can get out once it crosses the boundary called the <strong>event horizon</strong>.</p>
@@ -338,6 +341,9 @@
         <p>If you fell in feet-first, gravity would pull your feet far harder than your head, since your feet are closer to the centre. You'd be stretched into a long thin strand — scientists genuinely call this <em>spaghettification</em>.</p>
         <h3>They're not cosmic vacuum cleaners</h3>
         <p>A black hole only pulls in what gets close enough. If our Sun were magically replaced by a black hole of the same mass, Earth would keep orbiting exactly as before — just very, very dark.</p>
+        <h3>The black hole from Interstellar was real physics, not art</h3>
+        <p>Toggle "Gargantua Mode" on the canvas to see <strong>gravitational lensing</strong> — light from the far side of the accretion disk gets bent by gravity so strongly it appears to arc up and over the poles of the black hole. This isn't a movie effect: physicist <strong>Kip Thorne</strong> worked out the equations, and the studio DNEG rendered them frame-by-frame for the black hole nicknamed "Gargantua" in <em>Interstellar</em> — the result was accurate enough that it led to two published physics papers.</p>
+        <p class="fact-chip mono">Real black holes photographed by the Event Horizon Telescope (M87* and Sagittarius A*) show this same bright, warped ring — it's a genuine prediction of Einstein's general relativity, decades before any movie used it.</p>
         <img loading="lazy" src="images/black-hole-accretion-disk.jpg" alt="Illustration placeholder of a black hole accretion disk">
       </div>
     </div>

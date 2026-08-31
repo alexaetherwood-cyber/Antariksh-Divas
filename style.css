@@ -246,11 +246,14 @@ img{ max-width:100%; border-radius:var(--radius); display:block; border:1px soli
 /* ---------- Black hole section ---------- */
 .bh-layout{ display:grid; grid-template-columns:1fr 1fr; gap:36px; align-items:center; }
 @media (max-width: 860px){ .bh-layout{ grid-template-columns:1fr; } }
+.bh-canvas-wrap{ display:flex; flex-direction:column; gap:12px; }
 #blackHoleCanvas{
   width:100%; aspect-ratio: 3/2; border-radius:var(--radius); border:1px solid var(--border);
   background:radial-gradient(circle at center, #000 0%, #0a0e1a 70%);
   touch-action:none;
 }
+.bh-mode-btn{ align-self:center; }
+.bh-mode-btn.is-active{ border-color:var(--saffron); color:var(--saffron); }
 
 /* ---------- Zero-g section ---------- */
 .zerog-layout{ display:grid; grid-template-columns:1fr; gap:22px; position:relative; }
@@ -264,7 +267,6 @@ img{ max-width:100%; border-radius:var(--radius); display:block; border:1px soli
   0%,100%{ transform:translateY(0) rotate(0deg); }
   50%{ transform:translateY(-22px) rotate(8deg); }
 }
-.explainer-card.wide{ }
 
 /* ---------- Relativity ---------- */
 .relativity-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:22px; margin-bottom:36px; }
