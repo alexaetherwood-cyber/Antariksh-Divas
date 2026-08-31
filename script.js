@@ -322,6 +322,9 @@ function initPassport() {
   if (!stamps.length) return;
   const map = new Map(stamps.map(s => [s.dataset.stamp, s]));
   const ids = Array.from(map.keys());
+  // rootMargin pulls the trigger line up toward the vertical middle of the
+  // viewport, so a stamp lights up once a section is meaningfully on screen —
+  // regardless of whether the section is shorter or much taller than the viewport.
   const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -329,7 +332,7 @@ function initPassport() {
         if (stamp) stamp.classList.add('is-visited');
       }
     });
-  }, { threshold: 0.35 });
+  }, { threshold: 0, rootMargin: '0px 0px -55% 0px' });
   ids.forEach(id => {
     const section = document.getElementById(id);
     if (section) io.observe(section);
