@@ -734,25 +734,9 @@ function initBlackHoleCanvas() {
   const modeBtn = $('#bhModeBtn');
   const ctx = canvas.getContext('2d');
   let particles = [];
-  let bgStars = [];
-  let pointer = { x: canvas.width / 2, y: canvas.height / 2, active: false, vx: 0, vy: 0 };
+  let pointer = { x: canvas.width / 2, y: canvas.height / 2, active: false };
   let mode = 'particles'; // 'particles' | 'gargantua'
   let lensPhase = 0;
-  let hotspotAngle = 0;
-  let tiltX = 0, tiltY = 0; // smoothed parallax offset for Gargantua mode
-
-  // Temperature ramp used by both modes: near the horizon things glow
-  // white-hot, then cool through gold to deep ember red further out —
-  // a simplified version of how a real accretion disk's blackbody
-  // temperature actually falls off with distance.
-  function tempColor(t) {
-    // t: 0 (hottest, closest) -> 1 (coolest, farthest)
-    t = Math.max(0, Math.min(1, t));
-    if (t < 0.25) return `255,255,255`;
-    if (t < 0.5) return `255,225,180`;
-    if (t < 0.75) return `255,178,90`;
-    return `255,110,60`;
-  }
 
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
@@ -760,22 +744,8 @@ function initBlackHoleCanvas() {
     canvas.height = rect.height;
     pointer.x = canvas.width / 2;
     pointer.y = canvas.height / 2;
-    const perf = PerfGuard.getMode();
-    const count = perf === 'low' ? 35 : perf === 'medium' ? 90 : 170;
+    const count = PerfGuard.getMode() === 'low' ? 30 : PerfGuard.getMode() === 'medium' ? 70 : 130;
     particles = Array.from({ length: count }, () => spawnParticle());
-
-    const starCount = perf === 'low' ? 0 : perf === 'medium' ? 40 : 90;
-    bgStars = Array.from({ length: starCount }, () => {
-      const angle = Math.random() * Math.PI * 2;
-      const radius = (canvas.width / 2) * (0.35 + Math.random() * 0.75);
-      return {
-        angle, radius,
-        baseRadius: radius,
-        twinkle: Math.random() * Math.PI * 2,
-        size: Math.random() * 1.2 + 0.3,
-        drift: (Math.random() - 0.5) * 0.0006,
-      };
-    });
   }
 
   function spawnParticle() {
@@ -786,104 +756,26 @@ function initBlackHoleCanvas() {
       radius,
       speed: 0.002 + Math.random() * 0.004,
       size: Math.random() * 2 + 0.6,
-      trail: [],
-      justRespawned: true,
+      hue: Math.random() > 0.5 ? '255,153,51' : '255,209,102',
     };
   }
 
-  // Faint warped starfield behind the hole: stars near the shadow get
-  // pushed outward along their radial line, a cheap stand-in for real
-  // gravitational lensing (light from behind the hole bends around it).
-  function drawLensedBackground(cx, cy, eventHorizon) {
-    const lensStrength = eventHorizon * eventHorizon * 2.4;
-    for (const s of bgStars) {
-      s.angle += s.drift;
-      s.twinkle += 0.03;
-      const bend = lensStrength / Math.max(s.radius, eventHorizon * 1.05);
-      const r = s.radius + bend;
-      const x = cx + Math.cos(s.angle) * r;
-      const y = cy + Math.sin(s.angle) * r * 0.9;
-      const alpha = 0.25 + Math.sin(s.twinkle) * 0.2 + Math.min(bend / (eventHorizon * 3), 0.35);
-      ctx.fillStyle = `rgba(220,230,255,${Math.max(0.08, alpha)})`;
-      ctx.beginPath();
-      ctx.arc(x, y, s.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
   function drawParticleMode(cx, cy, eventHorizon) {
-    const perf = PerfGuard.getMode();
-    const trailLen = perf === 'low' ? 0 : perf === 'medium' ? 3 : 6;
-
-    drawLensedBackground(cx, cy, eventHorizon);
-
     for (const p of particles) {
-      // Frame-dragging: things whip around faster the closer they get.
-      p.angle += p.speed * (1 + (eventHorizon * eventHorizon) / (p.radius * p.radius) * 6);
-      p.radius -= 0.15 + (eventHorizon / p.radius) * 0.25;
-
+      p.angle += p.speed * (1 + eventHorizon / p.radius);
+      p.radius -= 0.15;
+      if (p.radius < eventHorizon) {
+        Object.assign(p, spawnParticle(), { radius: canvas.width / 2 });
+      }
       const targetX = pointer.active ? pointer.x : cx;
       const targetY = pointer.active ? pointer.y : cy;
       const x = targetX + Math.cos(p.angle) * p.radius;
       const y = targetY + Math.sin(p.angle) * p.radius * 0.55;
-
-      // Spaghettification: right before infall, stretch the particle into
-      // a thin radial streak instead of drawing it as a simple dot.
-      const infalling = p.radius < eventHorizon * 1.6;
-      const tempT = 1 - Math.min(1, (canvas.width / 2 - p.radius) / (canvas.width / 2));
-      const color = tempColor(tempT);
-
-      if (trailLen > 0) {
-        p.trail.push({ x, y });
-        if (p.trail.length > trailLen) p.trail.shift();
-        for (let i = 0; i < p.trail.length - 1; i++) {
-          const a = p.trail[i], b = p.trail[i + 1];
-          const alpha = (i / p.trail.length) * 0.5;
-          ctx.strokeStyle = `rgba(${color},${alpha})`;
-          ctx.lineWidth = p.size * (i / p.trail.length);
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
-        }
-      }
-
-      if (infalling) {
-        const stretch = 1 + (eventHorizon * 1.6 - p.radius) / (eventHorizon * 0.5) * 4;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(p.angle + Math.PI / 2);
-        const streakGrad = ctx.createLinearGradient(0, -stretch, 0, stretch);
-        streakGrad.addColorStop(0, `rgba(${color},0)`);
-        streakGrad.addColorStop(0.5, `rgba(${color},0.95)`);
-        streakGrad.addColorStop(1, `rgba(${color},0)`);
-        ctx.strokeStyle = streakGrad;
-        ctx.lineWidth = Math.max(0.6, p.size * 0.7);
-        ctx.beginPath();
-        ctx.moveTo(0, -stretch);
-        ctx.lineTo(0, stretch);
-        ctx.stroke();
-        ctx.restore();
-      } else {
-        ctx.fillStyle = `rgba(${color},0.9)`;
-        ctx.beginPath();
-        ctx.arc(x, y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (p.radius < eventHorizon * 0.55) {
-        Object.assign(p, spawnParticle(), { radius: canvas.width / 2 });
-      }
+      ctx.fillStyle = `rgba(${p.hue},0.85)`;
+      ctx.beginPath();
+      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.fill();
     }
-
-    // Subtle pulsing photon-sphere shimmer right at the shadow's edge.
-    const pulse = 1 + Math.sin(lensPhase) * 0.04;
-    lensPhase += 0.04;
-    ctx.strokeStyle = 'rgba(255,225,180,0.55)';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(pointer.active ? pointer.x : cx, pointer.active ? pointer.y : cy, eventHorizon * pulse, 0, Math.PI * 2);
-    ctx.stroke();
   }
 
   // A stylised, physically-motivated render of gravitational lensing around a
@@ -892,90 +784,31 @@ function initBlackHoleCanvas() {
   // produced for "Gargantua" in Interstellar, and that real telescopes have
   // since photographed around actual black holes (M87*, Sagittarius A*).
   function drawGargantuaMode(cx, cy, eventHorizon) {
-    const perf = PerfGuard.getMode();
     lensPhase += 0.01;
-    hotspotAngle += 0.012;
-
-    // Smoothly ease the disk tilt toward wherever the pointer is, like a
-    // camera drifting around the black hole — a nod to the way the
-    // Interstellar shots let the parallax reveal the 3D shape of the disk.
-    const targetTiltX = pointer.active ? (pointer.x - cx) / cx : 0;
-    const targetTiltY = pointer.active ? (pointer.y - cy) / cy : 0;
-    tiltX += (targetTiltX - tiltX) * 0.04;
-    tiltY += (targetTiltY - tiltY) * 0.04;
-
-    const diskOuter = eventHorizon * 5.4;
-    const squash = 0.3 + tiltY * 0.12; // pointer tilt subtly opens/closes the ellipse
-    const rotSkew = tiltX * 0.25;
-
-    drawLensedBackground(cx, cy, eventHorizon * 0.9);
+    const diskOuter = eventHorizon * 5.2;
+    const squash = 0.32; // how flat the disk ellipse looks (near edge-on view)
 
     // faint outer glow
-    const glow = ctx.createRadialGradient(cx, cy, eventHorizon, cx, cy, diskOuter * 1.2);
-    glow.addColorStop(0, 'rgba(255,209,102,0.2)');
+    const glow = ctx.createRadialGradient(cx, cy, eventHorizon, cx, cy, diskOuter * 1.15);
+    glow.addColorStop(0, 'rgba(255,209,102,0.18)');
     glow.addColorStop(1, 'rgba(10,14,26,0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(cx, cy, diskOuter * 1.2, 0, Math.PI * 2);
+    ctx.arc(cx, cy, diskOuter * 1.15, 0, Math.PI * 2);
     ctx.fill();
 
-    // Faint polar jets — thin, flickering beams of superheated particles
-    // funnelled out along the black hole's spin axis.
-    if (perf !== 'low') {
-      [-1, 1].forEach(dir => {
-        const jetLen = eventHorizon * (3.4 + Math.sin(lensPhase * 2 + dir) * 0.3);
-        const jetGrad = ctx.createLinearGradient(cx, cy, cx + rotSkew * jetLen * 0.4, cy + dir * jetLen);
-        jetGrad.addColorStop(0, 'rgba(190,225,255,0.55)');
-        jetGrad.addColorStop(1, 'rgba(190,225,255,0)');
-        ctx.strokeStyle = jetGrad;
-        ctx.lineWidth = eventHorizon * 0.16;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy + dir * eventHorizon * 0.9);
-        ctx.lineTo(cx + rotSkew * jetLen * 0.4, cy + dir * jetLen);
-        ctx.stroke();
-      });
-    }
-
-    // Main flat accretion disk, seen nearly edge-on. Doppler beaming makes
-    // matter spinning toward us (left side) glare brighter than matter
-    // spinning away (right side) — exactly the asymmetry real simulations
-    // and the EHT images of M87*/Sgr A* show.
-    const steps = perf === 'low' ? 26 : perf === 'medium' ? 42 : 60;
+    // main flat accretion disk, seen nearly edge-on
+    const steps = 60;
     for (let i = steps; i > 0; i--) {
       const t = i / steps;
       const r = eventHorizon * 1.15 + t * (diskOuter - eventHorizon * 1.15);
-      const baseBrightness = 1 - t * 0.85;
-      const hue = tempColor(t);
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotSkew * 0.15);
-      const beamGrad = ctx.createLinearGradient(-r, 0, r, 0);
-      beamGrad.addColorStop(0, `rgba(${hue},${Math.min(1, baseBrightness * 1.6)})`); // approaching side: brighter
-      beamGrad.addColorStop(0.5, `rgba(${hue},${baseBrightness})`);
-      beamGrad.addColorStop(1, `rgba(${hue},${baseBrightness * 0.4})`); // receding side: dimmer
-      ctx.strokeStyle = beamGrad;
+      const brightness = 1 - t * 0.85;
+      const hue = t < 0.4 ? '255,255,255' : t < 0.7 ? '255,209,102' : '255,140,60';
+      ctx.strokeStyle = `rgba(${hue},${brightness})`;
       ctx.lineWidth = (diskOuter - eventHorizon) / steps + 0.6;
       ctx.beginPath();
-      ctx.ellipse(0, 0, r, r * squash, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy, r, r * squash, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.restore();
-    }
-
-    // Orbiting hot-spot: a bright clump of matter circling near the inner
-    // edge of the disk — the same kind of feature that produces the
-    // "flares" astronomers track around Sagittarius A*.
-    const hsR = eventHorizon * 1.35;
-    const hsX = cx + Math.cos(hotspotAngle) * hsR;
-    const hsY = cy + Math.sin(hotspotAngle) * hsR * squash;
-    const hsFront = Math.sin(hotspotAngle) > -0.15; // only draw when not fully hidden behind the shadow
-    if (hsFront) {
-      const hsGlow = ctx.createRadialGradient(hsX, hsY, 0, hsX, hsY, eventHorizon * 0.5);
-      hsGlow.addColorStop(0, 'rgba(255,255,255,0.95)');
-      hsGlow.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = hsGlow;
-      ctx.beginPath();
-      ctx.arc(hsX, hsY, eventHorizon * 0.5, 0, Math.PI * 2);
-      ctx.fill();
     }
 
     // event horizon (the black sphere occludes the middle of the disk)
@@ -984,55 +817,36 @@ function initBlackHoleCanvas() {
     ctx.arc(cx, cy, eventHorizon, 0, Math.PI * 2);
     ctx.fill();
 
-    // photon ring — a thin, very bright double rim right at the edge of the shadow
-    ctx.strokeStyle = 'rgba(255,247,220,0.92)';
+    // photon ring — a thin, very bright rim right at the edge of the shadow
+    ctx.strokeStyle = 'rgba(255,247,220,0.9)';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.arc(cx, cy, eventHorizon * 1.03, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,200,150,0.35)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(cx, cy, eventHorizon * 1.1, 0, Math.PI * 2);
-    ctx.stroke();
 
-    // Lensed arcs: light from the far side of the disk (and the hot-spot
-    // riding on it) gets bent up and over the poles by gravity, forming a
-    // secondary warped image above and below the shadow.
+    // lensed arcs: light from the far side of the disk, bent up and over the
+    // poles by gravity, appearing as a halo above and below the black hole.
     const arcWobble = Math.sin(lensPhase) * 2;
     [-1, 1].forEach(dir => {
-      const arcRy = eventHorizon * (1.55 + arcWobble * 0.01 + tiltY * 0.3 * dir);
+      const arcRy = eventHorizon * (1.55 + arcWobble * 0.01);
       const arcRx = eventHorizon * 1.9;
       ctx.save();
-      ctx.translate(cx + rotSkew * eventHorizon * 0.6, cy + dir * eventHorizon * 0.05);
+      ctx.translate(cx, cy + dir * eventHorizon * 0.05);
       ctx.beginPath();
       ctx.ellipse(0, 0, arcRx, arcRy, 0, dir > 0 ? 0.08 : Math.PI + 0.08, dir > 0 ? Math.PI - 0.08 : 2 * Math.PI - 0.08);
       const arcGrad = ctx.createLinearGradient(-arcRx, 0, arcRx, 0);
-      arcGrad.addColorStop(0, 'rgba(255,225,180,0)');
-      arcGrad.addColorStop(0.5, 'rgba(255,241,214,0.9)');
-      arcGrad.addColorStop(1, 'rgba(255,180,110,0)');
+      arcGrad.addColorStop(0, 'rgba(255,209,102,0)');
+      arcGrad.addColorStop(0.5, 'rgba(255,241,214,0.85)');
+      arcGrad.addColorStop(1, 'rgba(255,209,102,0)');
       ctx.strokeStyle = arcGrad;
       ctx.lineWidth = eventHorizon * 0.22;
       ctx.stroke();
       ctx.restore();
-
-      // the hot-spot's lensed echo, sliding along the arc as it orbits
-      const echoT = (Math.sin(hotspotAngle * -1) + 1) / 2;
-      const echoAngle = (dir > 0 ? 0.15 : Math.PI + 0.15) + echoT * (Math.PI - 0.3);
-      const ex = cx + rotSkew * eventHorizon * 0.6 + Math.cos(echoAngle) * arcRx;
-      const ey = cy + dir * eventHorizon * 0.05 + Math.sin(echoAngle) * arcRy;
-      const echoGlow = ctx.createRadialGradient(ex, ey, 0, ex, ey, eventHorizon * 0.32);
-      echoGlow.addColorStop(0, 'rgba(255,255,255,0.85)');
-      echoGlow.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = echoGlow;
-      ctx.beginPath();
-      ctx.arc(ex, ey, eventHorizon * 0.32, 0, Math.PI * 2);
-      ctx.fill();
     });
   }
 
   function draw() {
-    ctx.fillStyle = mode === 'gargantua' ? 'rgba(10,14,26,0.35)' : 'rgba(10,14,26,0.22)';
+    ctx.fillStyle = mode === 'gargantua' ? 'rgba(10,14,26,0.4)' : 'rgba(10,14,26,0.25)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const cx = canvas.width / 2;
@@ -1043,23 +857,21 @@ function initBlackHoleCanvas() {
       drawGargantuaMode(cx, cy, eventHorizon);
     } else {
       // event horizon glow (simple mode)
-      const originX = pointer.active ? pointer.x : cx;
-      const originY = pointer.active ? pointer.y : cy;
-      const grad = ctx.createRadialGradient(originX, originY, eventHorizon * 0.2, originX, originY, eventHorizon * 3.2);
+      const grad = ctx.createRadialGradient(cx, cy, eventHorizon * 0.2, cx, cy, eventHorizon * 3);
       grad.addColorStop(0, 'rgba(0,0,0,1)');
-      grad.addColorStop(0.35, 'rgba(255,153,51,0.28)');
+      grad.addColorStop(0.4, 'rgba(255,153,51,0.25)');
       grad.addColorStop(1, 'rgba(10,14,26,0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(originX, originY, eventHorizon * 3.2, 0, Math.PI * 2);
+      ctx.arc(cx, cy, eventHorizon * 3, 0, Math.PI * 2);
       ctx.fill();
-
-      drawParticleMode(cx, cy, eventHorizon);
 
       ctx.fillStyle = '#000';
       ctx.beginPath();
-      ctx.arc(originX, originY, eventHorizon, 0, Math.PI * 2);
+      ctx.arc(cx, cy, eventHorizon, 0, Math.PI * 2);
       ctx.fill();
+
+      drawParticleMode(cx, cy, eventHorizon);
     }
     requestAnimationFrame(draw);
   }
