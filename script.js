@@ -26,6 +26,9 @@ const JOKES = {
   quiz: [
     "Unlike a politician's promises, every answer in this quiz is checkable, correctable, and doesn't change after election season.",
   ],
+  rocketgame: [
+    "Real rockets go through years of stage-testing before launch. Government infrastructure projects go through years of testing before anyone remembers what the project even was.",
+  ],
 };
 
 /* Edit LAUNCH_TARGET to any future date/time to drive the hero countdown widget. */
@@ -186,7 +189,7 @@ function initOrbitSpine() {
 
 /* --------------------------- Scroll reveal --------------------------- */
 function initReveal() {
-  const targets = $$('.explainer-card, .mpanel, .joke-break, .dilation-tool, .bh-layout, .zerog-layout');
+  const targets = $$('.explainer-card, .mpanel, .joke-break, .dilation-tool, .bh-layout, .zerog-layout, .compare-block, .rocket-game, .iss-layout');
   targets.forEach(t => t.classList.add('reveal'));
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('is-visible'); });
@@ -376,7 +379,7 @@ function initListenButtons() {
 
 /* --------------------------- Keyboard section navigation --------------------------- */
 function initKeyboardNav() {
-  const ids = ['top', 'missions', 'travel', 'blackhole', 'zerog', 'relativity', 'quiz'];
+  const ids = ['top', 'missions', 'travel', 'rocketgame', 'blackhole', 'zerog', 'isstracker', 'relativity', 'quiz'];
   window.addEventListener('keydown', (e) => {
     const tag = (e.target.tagName || '').toLowerCase();
     if (['input', 'textarea', 'button', 'select'].includes(tag)) return;
@@ -441,6 +444,285 @@ function fireConfetti() {
     }
   }
   requestAnimationFrame(draw);
+}
+
+/* --------------------------- Before/after compare slider --------------------------- */
+function initCompareSlider() {
+  const wrap = $('#compareSlider');
+  const clip = $('#compareClip');
+  const handle = $('#compareHandle');
+  if (!wrap || !clip || !handle) return;
+
+  let dragging = false;
+
+  function setPercent(pct) {
+    pct = Math.min(100, Math.max(0, pct));
+    clip.style.width = pct + '%';
+    handle.style.left = pct + '%';
+    handle.setAttribute('aria-valuenow', Math.round(pct));
+  }
+
+  function updateFromClientX(clientX) {
+    const rect = wrap.getBoundingClientRect();
+    const pct = ((clientX - rect.left) / rect.width) * 100;
+    setPercent(pct);
+  }
+
+  handle.addEventListener('pointerdown', (e) => { dragging = true; handle.setPointerCapture(e.pointerId); });
+  window.addEventListener('pointermove', (e) => { if (dragging) updateFromClientX(e.clientX); });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  wrap.addEventListener('pointerdown', (e) => { dragging = true; updateFromClientX(e.clientX); });
+
+  handle.addEventListener('keydown', (e) => {
+    const current = parseFloat(handle.style.left) || 50;
+    if (e.key === 'ArrowLeft') setPercent(current - 5);
+    if (e.key === 'ArrowRight') setPercent(current + 5);
+  });
+
+  setPercent(50);
+}
+
+/* --------------------------- Build-a-rocket mini-game --------------------------- */
+function initRocketGame() {
+  const bin = $('#partsBin');
+  const slots = $$('.rocket-slot');
+  const statusEl = $('#rocketStatus');
+  const launchBtn = $('#launchBtn');
+  const resetBtn = $('#resetRocketBtn');
+  if (!bin || !slots.length) return;
+
+  const PARTS = [
+    { id: 'booster', label: 'Booster Stage', icon: '🔥' },
+    { id: 'stage2', label: 'Second Stage', icon: '⚙️' },
+    { id: 'service', label: 'Service Module', icon: '🛠️' },
+    { id: 'nosecone', label: 'Nose Cone / Payload', icon: '📡' },
+  ];
+
+  let selectedPart = null; // for click-to-place
+
+  function partInfo(id) { return PARTS.find(p => p.id === id); }
+
+  function fillSlot(slot, partId) {
+    const info = partInfo(partId);
+    if (!info) return;
+    slot.classList.add('is-filled');
+    slot.classList.remove('is-dragover', 'is-wrong');
+    slot.dataset.filled = partId;
+    slot.innerHTML = `<div class="rocket-part-chip"><span>${info.icon}</span><span>${info.label}</span></div>`;
+  }
+
+  function emptySlot(slot) {
+    const idx = parseInt(slot.dataset.slotIndex, 10);
+    const labelMap = { 0: 'Slot 1 — Booster Stage', 1: 'Slot 2 — Second Stage', 2: 'Slot 3 — Service Module', 3: 'Slot 4 — Nose Cone / Payload' };
+    slot.classList.remove('is-filled', 'is-wrong');
+    delete slot.dataset.filled;
+    slot.innerHTML = (idx === 3 ? '<span class="slot-hint mono">TOP</span>' : idx === 0 ? '<span class="slot-hint mono">BOTTOM</span>' : '') +
+      `<span class="slot-placeholder">${labelMap[idx]}</span>`;
+  }
+
+  function renderBinExcluding() {
+    const usedIds = slots.map(s => s.dataset.filled).filter(Boolean);
+    bin.innerHTML = '';
+    PARTS.filter(p => !usedIds.includes(p.id)).forEach(part => {
+      const chip = document.createElement('div');
+      chip.className = 'rocket-part';
+      chip.draggable = true;
+      chip.dataset.partId = part.id;
+      chip.innerHTML = `<span>${part.icon}</span><span>${part.label}</span>`;
+      chip.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', part.id));
+      chip.addEventListener('click', () => {
+        $$('.rocket-part', bin).forEach(c => c.classList.remove('is-selected'));
+        if (selectedPart === part.id) { selectedPart = null; return; }
+        selectedPart = part.id;
+        chip.classList.add('is-selected');
+        statusEl.textContent = `Selected: ${part.label}. Now tap an empty slot to place it.`;
+      });
+      bin.appendChild(chip);
+    });
+  }
+
+  function placePart(slot, partId) {
+    if (slot.dataset.filled) emptySlot(slot); // kick any existing part in this slot back to the bin
+    fillSlot(slot, partId);
+    renderBinExcluding();
+    statusEl.textContent = 'Part placed. Keep going!';
+    selectedPart = null;
+  }
+
+  slots.forEach(slot => {
+    slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.classList.add('is-dragover'); });
+    slot.addEventListener('dragleave', () => slot.classList.remove('is-dragover'));
+    slot.addEventListener('drop', (e) => {
+      e.preventDefault();
+      slot.classList.remove('is-dragover');
+      const partId = e.dataTransfer.getData('text/plain');
+      if (partId) placePart(slot, partId);
+    });
+    slot.addEventListener('click', () => {
+      if (slot.dataset.filled) {
+        emptySlot(slot);
+        renderBinExcluding();
+        statusEl.textContent = 'Part returned to bin.';
+        return;
+      }
+      if (selectedPart) placePart(slot, selectedPart);
+    });
+  });
+
+  function reset() {
+    slots.forEach(emptySlot);
+    selectedPart = null;
+    statusEl.textContent = 'Parts bin ready. Assemble the stack.';
+    renderBinExcluding();
+  }
+
+  launchBtn.addEventListener('click', () => {
+    const allFilled = slots.every(s => s.dataset.filled);
+    if (!allFilled) {
+      statusEl.textContent = '⚠️ Fill every slot before launch.';
+      return;
+    }
+    const wrongSlots = slots.filter(s => s.dataset.filled !== s.dataset.correct);
+    if (wrongSlots.length) {
+      statusEl.textContent = `❌ Not quite — ${wrongSlots.length} part(s) in the wrong position. Check the order and try again.`;
+      wrongSlots.forEach(s => {
+        s.classList.add('is-wrong');
+        setTimeout(() => s.classList.remove('is-wrong'), 500);
+      });
+      return;
+    }
+    statusEl.textContent = '✅ Perfect stack! Ignition sequence start…';
+    const silo = $('.rocket-silo');
+    if (silo) silo.classList.add('rocket-launch-anim');
+    if (!prefersReducedMotion) fireConfetti();
+    setTimeout(() => {
+      statusEl.textContent = '🚀 Liftoff! Resetting the pad for the next build…';
+      if (silo) silo.classList.remove('rocket-launch-anim');
+      reset();
+    }, 1500);
+  });
+
+  resetBtn.addEventListener('click', reset);
+  reset();
+}
+
+/* --------------------------- ISS live tracker --------------------------- */
+function initIssTracker() {
+  const dot = $('#issDot');
+  const latEl = $('#issLat');
+  const lonEl = $('#issLon');
+  const altEl = $('#issAlt');
+  const velEl = $('#issVel');
+  const statusEl = $('#issStatus');
+  if (!dot) return;
+
+  function place(lat, lon) {
+    const x = ((lon + 180) / 360) * 100;
+    const y = ((90 - lat) / 180) * 100;
+    dot.style.left = x + '%';
+    dot.style.top = y + '%';
+  }
+
+  async function fetchPosition() {
+    try {
+      const res = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      place(data.latitude, data.longitude);
+      latEl.textContent = data.latitude.toFixed(2) + '°';
+      lonEl.textContent = data.longitude.toFixed(2) + '°';
+      altEl.textContent = Math.round(data.altitude) + ' km';
+      velEl.textContent = Math.round(data.velocity).toLocaleString() + ' km/h';
+      statusEl.textContent = 'LIVE';
+      statusEl.style.color = 'var(--green)';
+    } catch (err) {
+      statusEl.textContent = 'Signal lost — retrying…';
+      statusEl.style.color = 'var(--danger)';
+    }
+  }
+
+  fetchPosition();
+  setInterval(fetchPosition, 6000);
+}
+
+/* --------------------------- Certificate generator --------------------------- */
+let lastQuizScore = { score: 0, total: 0 };
+
+function initCertificate() {
+  const genBtn = $('#certGenerateBtn');
+  const nameInput = $('#certName');
+  const canvas = $('#certCanvas');
+  const downloadLink = $('#certDownloadLink');
+  if (!genBtn || !canvas) return;
+
+  genBtn.addEventListener('click', () => {
+    const name = (nameInput.value || 'Space Cadet').trim();
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#0a0e1a');
+    grad.addColorStop(1, '#121a2e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // border
+    ctx.strokeStyle = '#ff9933';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(24, 24, W - 48, H - 48);
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(38, 38, W - 76, H - 76);
+
+    // stars
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (let i = 0; i < 60; i++) {
+      const x = Math.random() * W, y = Math.random() * H;
+      ctx.beginPath();
+      ctx.arc(x, y, Math.random() * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // emblem
+    ctx.font = '70px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🚀', W / 2, 150);
+
+    ctx.fillStyle = '#8fa0c2';
+    ctx.font = '20px monospace';
+    ctx.fillText('BHARAT\'S ORBIT · ISRO SPACE DAY', W / 2, 195);
+
+    ctx.fillStyle = '#f5f7fa';
+    ctx.font = 'bold 44px sans-serif';
+    ctx.fillText('CERTIFICATE OF COMPLETION', W / 2, 260);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.font = 'bold 52px sans-serif';
+    ctx.fillText(name, W / 2, 360);
+
+    ctx.fillStyle = '#8fa0c2';
+    ctx.font = '22px sans-serif';
+    ctx.fillText('has successfully completed the Space Day mission briefing', W / 2, 410);
+
+    ctx.fillStyle = '#ff9933';
+    ctx.font = 'bold 34px monospace';
+    ctx.fillText(`SPACE IQ SCORE: ${lastQuizScore.score} / ${lastQuizScore.total || 5}`, W / 2, 480);
+
+    ctx.fillStyle = '#8fa0c2';
+    ctx.font = '18px monospace';
+    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    ctx.fillText(dateStr, W / 2, 560);
+
+    ctx.font = '16px monospace';
+    ctx.fillText('Mission Control — Ground Track Complete', W / 2, 600);
+
+    canvas.hidden = false;
+    const dataUrl = canvas.toDataURL('image/png');
+    downloadLink.href = dataUrl;
+    downloadLink.hidden = false;
+    canvas.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' });
+  });
 }
 
 /* --------------------------- Black hole interactive canvas --------------------------- */
@@ -638,6 +920,8 @@ function initQuiz() {
   });
 
   function showScore() {
+    lastQuizScore = { score, total: QUIZ_DATA.length };
+
     const scoreEl = document.createElement('div');
     scoreEl.className = 'quiz-score';
     scoreEl.innerHTML = `<div class="score-num">${score} / ${QUIZ_DATA.length}</div><p>Space IQ checkpoint complete.</p>`;
@@ -657,6 +941,9 @@ function initQuiz() {
 
     root.appendChild(scoreEl);
     scoreEl.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'center' });
+
+    const certArea = $('#certificateArea');
+    if (certArea) certArea.hidden = false;
 
     if (score === QUIZ_DATA.length) fireConfetti();
   }
@@ -686,6 +973,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initPassport();
   initListenButtons();
   initKeyboardNav();
+  initCompareSlider();
+  initRocketGame();
+  initIssTracker();
+  initCertificate();
   initBlackHoleCanvas();
   initRelativityTool();
   initQuiz();

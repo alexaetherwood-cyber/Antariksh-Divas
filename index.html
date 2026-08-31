@@ -47,8 +47,10 @@
     <nav class="main-nav" id="mainNav">
       <a href="#missions">Missions</a>
       <a href="#travel">Space Travel</a>
+      <a href="#rocketgame">Build a Rocket</a>
       <a href="#blackhole">Black Holes</a>
       <a href="#zerog">Zero-G</a>
+      <a href="#isstracker">ISS Live</a>
       <a href="#relativity">Relativity</a>
       <a href="#quiz">Quiz</a>
     </nav>
@@ -57,10 +59,12 @@
         <span class="passport-label">PASSPORT</span>
         <span class="stamp" data-stamp="missions" title="Missions">①</span>
         <span class="stamp" data-stamp="travel" title="Space Travel">②</span>
-        <span class="stamp" data-stamp="blackhole" title="Black Holes">③</span>
-        <span class="stamp" data-stamp="zerog" title="Zero-G">④</span>
-        <span class="stamp" data-stamp="relativity" title="Relativity">⑤</span>
-        <span class="stamp" data-stamp="quiz" title="Quiz">⑥</span>
+        <span class="stamp" data-stamp="rocketgame" title="Build a Rocket">③</span>
+        <span class="stamp" data-stamp="blackhole" title="Black Holes">④</span>
+        <span class="stamp" data-stamp="zerog" title="Zero-G">⑤</span>
+        <span class="stamp" data-stamp="isstracker" title="ISS Live">⑥</span>
+        <span class="stamp" data-stamp="relativity" title="Relativity">⑦</span>
+        <span class="stamp" data-stamp="quiz" title="Quiz">⑧</span>
       </div>
       <button id="smartBoardToggle" class="ctrl-btn" title="Toggle Smart-Board Mode (bigger text & targets)">
         <span aria-hidden="true">🖥️</span> Board Mode
@@ -225,6 +229,22 @@
       </article>
 
     </div>
+
+    <div class="compare-block">
+      <h3>Compare the Landings: Chandrayaan-2 vs Chandrayaan-3</h3>
+      <p>Drag the handle to see the difference four years of engineering fixes made.</p>
+      <div class="compare-slider" id="compareSlider">
+        <img class="compare-img compare-after" src="images/chandrayaan-3-vikram-lander.jpg" alt="Placeholder image representing the Chandrayaan-3 successful landing">
+        <div class="compare-clip" id="compareClip">
+          <img class="compare-img compare-before" src="images/chandrayaan-2-orbiter.jpg" alt="Placeholder image representing the Chandrayaan-2 descent">
+        </div>
+        <div class="compare-handle" id="compareHandle" role="slider" tabindex="0" aria-label="Drag to compare Chandrayaan-2 and Chandrayaan-3" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+          <span>↔</span>
+        </div>
+        <span class="compare-tag compare-tag-left">2019 · Contact Lost</span>
+        <span class="compare-tag compare-tag-right">2023 · Touchdown Confirmed</span>
+      </div>
+    </div>
   </section>
 
   <!-- SPACE TRAVEL -->
@@ -258,6 +278,46 @@
     </div>
 
     <p class="quip" data-joke-slot="travel">Why did the rocket break up with the politician? Every time it tried to launch, the politician kept promising a "final decision next session."</p>
+  </section>
+
+  <!-- BUILD A ROCKET MINI-GAME -->
+  <section class="section" id="rocketgame">
+    <header class="section-head">
+      <p class="eyebrow mono">HANDS-ON SIMULATION</p>
+      <h2>Build a Rocket: Get the Stack Order Right</h2>
+      <p class="section-lede">Real rockets stack in a strict order — heaviest, dumbest parts at the bottom, smartest and lightest at the top. Drag each part into its slot (or tap a part, then tap a slot), then hit launch.</p>
+    </header>
+
+    <div class="rocket-game" id="rocketGame">
+      <div class="rocket-silo">
+        <div class="rocket-slot" data-slot-index="3" data-correct="nosecone">
+          <span class="slot-hint mono">TOP</span>
+          <span class="slot-placeholder">Slot 4 — Nose Cone / Payload</span>
+        </div>
+        <div class="rocket-slot" data-slot-index="2" data-correct="service">
+          <span class="slot-placeholder">Slot 3 — Service Module</span>
+        </div>
+        <div class="rocket-slot" data-slot-index="1" data-correct="stage2">
+          <span class="slot-placeholder">Slot 2 — Second Stage</span>
+        </div>
+        <div class="rocket-slot" data-slot-index="0" data-correct="booster">
+          <span class="slot-hint mono">BOTTOM</span>
+          <span class="slot-placeholder">Slot 1 — Booster Stage</span>
+        </div>
+        <div class="rocket-fins" aria-hidden="true"></div>
+      </div>
+
+      <div class="rocket-controls">
+        <p class="mono rocket-status" id="rocketStatus">Parts bin ready. Assemble the stack.</p>
+        <div class="parts-bin" id="partsBin"></div>
+        <div class="rocket-actions">
+          <button class="btn btn-primary" id="launchBtn" type="button">🚀 Launch</button>
+          <button class="ctrl-btn" id="resetRocketBtn" type="button">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="quip" data-joke-slot="rocketgame">Real rockets go through years of stage-testing before launch. Government infrastructure projects go through years of testing before anyone remembers what the project even was.</p>
   </section>
 
   <!-- BLACK HOLES -->
@@ -315,6 +375,34 @@
     <p class="quip" data-joke-slot="zerog">Astronauts in microgravity float because nothing is holding them down — which, coincidentally, is also how most politicians describe their campaign promises after election day.</p>
   </section>
 
+  <!-- ISS LIVE TRACKER -->
+  <section class="section alt" id="isstracker">
+    <header class="section-head">
+      <p class="eyebrow mono">REAL-TIME TELEMETRY</p>
+      <h2>Track the ISS — Live, Right Now</h2>
+      <p class="section-lede">This isn't a simulation. The dot below is pulled from a live public tracking feed and shows where the International Space Station actually is above Earth at this exact moment.</p>
+    </header>
+
+    <div class="iss-layout">
+      <div class="iss-radar" id="issRadar">
+        <div class="iss-grid" aria-hidden="true">
+          <span class="iss-line iss-equator"></span>
+          <span class="iss-line iss-meridian"></span>
+        </div>
+        <div class="iss-dot" id="issDot" title="ISS current position">🛰️</div>
+        <div class="iss-trail" id="issTrail"></div>
+      </div>
+      <div class="iss-readout mono">
+        <div><span class="dr-label">Latitude</span><span class="dr-value" id="issLat">—</span></div>
+        <div><span class="dr-label">Longitude</span><span class="dr-value" id="issLon">—</span></div>
+        <div><span class="dr-label">Altitude</span><span class="dr-value" id="issAlt">—</span></div>
+        <div><span class="dr-label">Velocity</span><span class="dr-value" id="issVel">—</span></div>
+        <div><span class="dr-label">Status</span><span class="dr-value" id="issStatus">Connecting…</span></div>
+        <p class="iss-note">The ISS orbits Earth roughly every 90 minutes — about 16 sunrises a day for the crew on board. Position refreshes every few seconds from a public tracking API.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- RELATIVITY -->
   <section class="section" id="relativity">
     <header class="section-head">
@@ -360,6 +448,16 @@
     </header>
     <p class="quip" data-joke-slot="quiz">Unlike a politician's promises, every answer in this quiz is checkable, correctable, and doesn't change after election season.</p>
     <div id="quizRoot" class="quiz-root"></div>
+    <div id="certificateArea" class="certificate-area" hidden>
+      <h3>Claim Your Space Cadet Certificate</h3>
+      <p>Type your name and generate a downloadable certificate with your score on it.</p>
+      <div class="cert-form">
+        <input type="text" id="certName" class="cert-input" placeholder="Enter your name" maxlength="40">
+        <button class="btn btn-primary" id="certGenerateBtn" type="button">🎖️ Generate Certificate</button>
+      </div>
+      <canvas id="certCanvas" width="1000" height="700" class="cert-canvas" hidden></canvas>
+      <a id="certDownloadLink" class="btn btn-ghost" hidden download="space-cadet-certificate.png">⬇️ Download Certificate</a>
+    </div>
     <canvas id="confettiCanvas" aria-hidden="true"></canvas>
   </section>
 
